@@ -11,14 +11,14 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    "confluent start schema-registry" !
+    "./opt/confluent-3.3.0/bin/confluent start schema-registry" !
 
     "echo {\\\"key\\\": \\\"value\\\"} | kafka-avro-console-producer --broker-list localhost:9092 --topic test-topic --property value.schema='{\"type\":\"record\",\"name\":\"myrecord\",\"fields\":[{\"name\":\"key\",\"type\":\"string\"}]}'" !
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    "confluent destroy" !
+    "./opt/confluent-3.3.0/bin/confluent destroy" !
   }
 
   "The Spark DirectStreamer" must
