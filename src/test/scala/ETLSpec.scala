@@ -30,6 +30,13 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
       .master("local").getOrCreate()
   }
 
+  override def afterAll(): Unit = {
+    super.afterAll()
+
+    sc.stop()
+    spark.stop()
+  }
+
   "The real time etl process" should
     "start from a nested json and transform it in a plain dataframe" in {
 
