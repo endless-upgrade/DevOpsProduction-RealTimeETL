@@ -104,31 +104,6 @@ case class DirectStreamer(){
     ssc.awaitTermination()
   }
 
-  def createOnlyDebugDirectStream() : String = {
-
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
-      ssc, kafkaParams, topics)
-
-    messages.foreachRDD(
-      rdd =>
-      {
-        if(rdd.isEmpty){
-          println("[ INFO ] Empty RDD")
-        }
-        else{
-          rdd.foreach(println)
-          return rdd.map(e => e._2).collect()(0)
-        }
-      }
-    )
-
-    ssc.start()
-    ssc.awaitTermination()
-
-    ""
-  }
-
-
   def createDebugDirectStream(tableName : String) : Unit ={
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
