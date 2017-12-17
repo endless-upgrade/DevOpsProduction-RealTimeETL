@@ -79,7 +79,7 @@ object Stream {
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
 
-    val messages = streamer.createDirectStream()
+    val messages = streamer.createDirectStream(tableName, processStream)
 
 //    messages.foreachRDD(
 //      rdd =>
