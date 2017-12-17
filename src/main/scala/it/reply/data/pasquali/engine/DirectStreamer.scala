@@ -2,9 +2,8 @@ package it.reply.data.pasquali.engine
 
 import _root_.kafka.serializer._
 import it.reply.data.pasquali.storage.Storage
-import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka._

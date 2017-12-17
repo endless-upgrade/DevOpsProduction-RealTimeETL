@@ -16,6 +16,10 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
 
     var startConfluent = "sudo /opt/confluent-3.3.0/bin/confluent start schema-registry" !!
 
+    println("-----------")
+    println(startConfluent)
+    println("-----------")
+
     if(startConfluent.contains("DONW"))
     {
       println("\n\n\nRETRY START CONFLUENT")
@@ -61,6 +65,8 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
         else
         {
           "sudo /opt/confluent-3.3.0/bin/confluent destroy" !
+
+
 
           assert(true)
         }
