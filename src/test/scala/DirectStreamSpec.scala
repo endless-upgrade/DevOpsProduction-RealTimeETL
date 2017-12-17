@@ -55,24 +55,9 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
 
     val message = ds
       .initKakfa("localhost", "9092", "smallest", "group1", "test-topic")
-      .createDebugDirectStream("", debugStream)
+        .createOnlyDebugDirectStream()
 
-
+    assert(message == "{\"key\": \"value\"}")
   }
-
-  def debugStream(rdd : RDD[(String, String)],
-                  spark : SparkSession,
-                  tableName : String) : Unit = {
-
-    if(rdd.isEmpty){
-      println("[ INFO ] Empty RDD")
-    }
-    else{
-      val stringRDD = rdd.map(entry => entry._2)
-      assert(stringRDD.collect()(0) == "{\"key\": \"value\"}")
-    }
-  }
-
-
 
 }

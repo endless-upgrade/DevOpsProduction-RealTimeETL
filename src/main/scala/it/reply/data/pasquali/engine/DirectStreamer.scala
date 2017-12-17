@@ -1,6 +1,7 @@
 package it.reply.data.pasquali.engine
 
 import _root_.kafka.serializer._
+import it.reply.data.pasquali.model.TransformedDFs
 import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -70,26 +71,90 @@ case class DirectStreamer(){
   }
 
 
-  def createDirectStream(tableName : String,
-                         storage : Storage,
-                         process : (RDD[(String, String)], SparkSession, String, Storage) => Unit) : Unit ={
+  def createDirectStream(tableName : String, storage : Storage) : Unit ={
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
 
-    messages.foreachRDD(rdd => process(rdd, spark, tableName, storage))
+    messages.foreachRDD(
+      rdd =>
+        {
+          if(rdd.isEmpty){
+            println("[ INFO ] Empty RDD")
+          }
+          else{
+            val stringRDD = rdd.map(entry => entry._2)
+
+            val dfs : TransformedDFs =
+              ETL.transformRDD(stringRDD, spark, tableName)
+
+            dfs.toHive.printSchema()
+            dfs.toKudu.printSchema()
+
+            println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
+            storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
+            println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
+            storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
+
+          }
+        }
+    )
 
     ssc.start()
     ssc.awaitTermination()
   }
 
-  def createDebugDirectStream(tableName : String,
-                         process : (RDD[(String, String)], SparkSession, String) => Unit) : Unit ={
+  def createOnlyDebugDirectStream() : String = {
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
 
-    messages.foreachRDD(rdd => process(rdd, spark, tableName))
+    ssc.start()
+    ssc.awaitTermination()
+
+    messages.foreachRDD(
+      rdd =>
+      {
+        if(rdd.isEmpty){
+          println("[ INFO ] Empty RDD")
+        }
+        else{
+          rdd.foreach(println)
+          return rdd.map(e => e._2).collect()(0)
+        }
+      }
+    )
+
+
+
+    ""
+  }
+
+
+  def createDebugDirectStream(tableName : String) : Unit ={
+
+    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
+      ssc, kafkaParams, topics)
+
+    messages.foreachRDD(
+      rdd =>
+      {
+        if(rdd.isEmpty){
+          println("[ INFO ] Empty RDD")
+        }
+        else{
+          val stringRDD = rdd.map(entry => entry._2)
+
+          val dfs : TransformedDFs =
+            ETL.transformRDD(stringRDD, spark, tableName)
+
+          dfs.toHive.printSchema()
+          dfs.toKudu.printSchema()
+          dfs.toHive.show()
+          dfs.toKudu.show()
+        }
+      }
+    )
 
     ssc.start()
     ssc.awaitTermination()
