@@ -109,9 +109,6 @@ case class DirectStreamer(){
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
 
-    ssc.start()
-    ssc.awaitTermination()
-
     messages.foreachRDD(
       rdd =>
       {
@@ -125,7 +122,8 @@ case class DirectStreamer(){
       }
     )
 
-
+    ssc.start()
+    ssc.awaitTermination()
 
     ""
   }
