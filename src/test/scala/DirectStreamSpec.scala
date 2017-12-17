@@ -1,4 +1,6 @@
 import it.reply.data.pasquali.engine.DirectStreamer
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import sys.process._
@@ -53,24 +55,22 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
 
     val message = ds
       .initKakfa("localhost", "9092", "smallest", "group1", "test-topic")
-      .createDirectStream()
+      .createDebugDirectStream("", debugStream)
 
-    message.foreachRDD(
-      rdd => {
-        if(!rdd.isEmpty())
-        {
-          val stringRDD = rdd.map(entry => entry._2)
-          assert(stringRDD.collect()(0) == "{\"key\": \"value\"}")
-        }
-        else
-        {
-          "sudo /opt/confluent-3.3.0/bin/confluent destroy" !
 
-          assert(true)
-        }
-      }
-    )
+  }
 
+  def debugStream(rdd : RDD[(String, String)],
+                  spark : SparkSession,
+                  tableName : String) : Unit = {
+
+    if(rdd.isEmpty){
+      println("[ INFO ] Empty RDD")
+    }
+    else{
+      val stringRDD = rdd.map(entry => entry._2)
+      assert(stringRDD.collect()(0) == "{\"key\": \"value\"}")
+    }
   }
 
 

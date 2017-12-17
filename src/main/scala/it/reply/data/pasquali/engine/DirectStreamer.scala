@@ -70,7 +70,21 @@ case class DirectStreamer(){
   }
 
 
-  def createDirectStream(tableName : String, process : (RDD[(String, String)], SparkSession, String) => Unit) : Unit ={
+  def createDirectStream(tableName : String,
+                         storage : Storage,
+                         process : (RDD[(String, String)], SparkSession, String, Storage) => Unit) : Unit ={
+
+    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
+      ssc, kafkaParams, topics)
+
+    messages.foreachRDD(rdd => process(rdd, spark, tableName, storage))
+
+    ssc.start()
+    ssc.awaitTermination()
+  }
+
+  def createDebugDirectStream(tableName : String,
+                         process : (RDD[(String, String)], SparkSession, String) => Unit) : Unit ={
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)

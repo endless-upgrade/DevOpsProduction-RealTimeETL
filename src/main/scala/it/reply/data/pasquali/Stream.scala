@@ -79,7 +79,11 @@ object Stream {
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
 
-    val messages = streamer.createDirectStream(tableName, processStream)
+
+    if(onlyDebug)
+      streamer.createDebugDirectStream(tableName, debugStream)
+    else
+      streamer.createDirectStream(tableName, storage, processStream)
 
 //    messages.foreachRDD(
 //      rdd =>
@@ -89,7 +93,7 @@ object Stream {
 //    )
   }
 
-  def processStream(rdd : RDD[(String, String)],
+  def debugStream(rdd : RDD[(String, String)],
                     spark : SparkSession,
                     tableName : String) : Unit = {
 
@@ -99,24 +103,41 @@ object Stream {
     else{
       val stringRDD = rdd.map(entry => entry._2)
 
-      var dfs : TransformedDFs =
+      val dfs : TransformedDFs =
         ETL.transformRDD(stringRDD, spark, tableName)
 
       dfs.toHive.printSchema()
       dfs.toKudu.printSchema()
 
-      if(onlyDebug)
-      {
-        dfs.toHive.show()
-        dfs.toKudu.show()
-      }
-      else
-      {
-        println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
-        storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
-        println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
-        storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
-      }
+      dfs.toHive.show()
+      dfs.toKudu.show()
+    }
+  }
+
+
+
+  def processStream(rdd : RDD[(String, String)],
+                    spark : SparkSession,
+                    tableName : String,
+                    storage: Storage) : Unit = {
+
+    if(rdd.isEmpty){
+      println("[ INFO ] Empty RDD")
+    }
+    else{
+      val stringRDD = rdd.map(entry => entry._2)
+
+      val dfs : TransformedDFs =
+        ETL.transformRDD(stringRDD, spark, tableName)
+
+      dfs.toHive.printSchema()
+      dfs.toKudu.printSchema()
+
+      println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
+      storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
+      println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
+      storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
+
     }
   }
 
