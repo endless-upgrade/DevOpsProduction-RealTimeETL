@@ -3,6 +3,8 @@ package it.reply.data.pasquali
 import it.reply.data.pasquali.engine.{DirectStreamer, ETL}
 import it.reply.data.pasquali.model.TransformedDFs
 import it.reply.data.pasquali.storage.Storage
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 
 object Stream {
 
@@ -79,36 +81,43 @@ object Stream {
 
     val messages = streamer.createDirectStream()
 
-    messages.foreachRDD(
-      rdd =>
+//    messages.foreachRDD(
+//      rdd =>
+//      {
+//        processStream(rdd, spark, tableName)
+//      }
+//    )
+  }
+
+  def processStream(rdd : RDD[(String, String)],
+                    spark : SparkSession,
+                    tableName : String) : Unit = {
+
+    if(rdd.isEmpty){
+      println("[ INFO ] Empty RDD")
+    }
+    else{
+      val stringRDD = rdd.map(entry => entry._2)
+
+      var dfs : TransformedDFs =
+        ETL.transformRDD(stringRDD, spark, tableName)
+
+      dfs.toHive.printSchema()
+      dfs.toKudu.printSchema()
+
+      if(onlyDebug)
       {
-        if(rdd.isEmpty){
-          println("[ INFO ] Empty RDD")
-        }
-        else{
-          val stringRDD = rdd.map(entry => entry._2)
-
-          var dfs : TransformedDFs =
-            ETL.transformRDD(stringRDD, spark, tableName)
-
-          dfs.toHive.printSchema()
-          dfs.toKudu.printSchema()
-
-          if(onlyDebug)
-          {
-            dfs.toHive.show()
-            dfs.toKudu.show()
-          }
-          else
-          {
-            println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
-            storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
-            println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
-            storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
-          }
-        }
+        dfs.toHive.show()
+        dfs.toKudu.show()
       }
-    )
+      else
+      {
+        println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
+        storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
+        println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
+        storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
+      }
+    }
   }
 
 }

@@ -3,6 +3,7 @@ package it.reply.data.pasquali.engine
 import _root_.kafka.serializer._
 import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.InputDStream
@@ -13,7 +14,6 @@ case class DirectStreamer(){
 
   val KUDU_MASTER = "cloudera-vm.c.endless-upgrade-187216.internal:7051"
   val KUDU_TABLE_BASE = "impala::datamart."
-
 
 /*
   // TODO In the next update
@@ -47,6 +47,7 @@ case class DirectStreamer(){
   def initKakfa(bootstrapServer : String, bootstrapPort : String,
                 offset : String, groupID : String, singleTopic : String) : DirectStreamer = {
 
+
     initKakfa(bootstrapServer, bootstrapPort, offset, groupID, Set[String](singleTopic))
   }
 
@@ -69,15 +70,15 @@ case class DirectStreamer(){
   }
 
 
-  def createDirectStream() : InputDStream[(String, String)] ={
+  def createDirectStream(tableName : String, process : (RDD[(String, String)], SparkSession, String) => Unit) : Unit ={
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
 
+    messages.foreachRDD(rdd => process(rdd, spark, tableName))
+
     ssc.start()
     ssc.awaitTermination()
-
-    messages
   }
 
 
