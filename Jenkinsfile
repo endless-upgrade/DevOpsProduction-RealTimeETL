@@ -30,7 +30,7 @@ pipeline {
     }
     stage('Deploy') {
       steps {
-        sh 'sudo cp target/*/*.war /opt/deploy/realTimeETL/'
+        sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
       }
     }
   }
