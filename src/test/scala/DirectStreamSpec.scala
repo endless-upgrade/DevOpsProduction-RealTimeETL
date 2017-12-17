@@ -19,6 +19,7 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
   override def afterAll(): Unit = {
     super.afterAll()
     "/opt/confluent-3.3.0/bin/confluent destroy" !
+    
     if(ds != null)
       ds.ssc.stop()
   }
