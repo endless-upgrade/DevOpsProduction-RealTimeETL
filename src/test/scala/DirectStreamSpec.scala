@@ -29,7 +29,7 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
     if(startConfluent.contains("DONW"))
       fail("\n\n\nunable to start confluent")
 
-    "echo {\\\"key\\\": \\\"value\\\"} | kafka-avro-console-producer --broker-list localhost:9092 --topic test-topic --property value.schema='{\"type\":\"record\",\"name\":\"myrecord\",\"fields\":[{\"name\":\"key\",\"type\":\"string\"}]}'" !
+    "echo {\\\"key\\\": \\\"value\\\"} | sudo /opt/confluent-3.3.0/bin/kafka-avro-console-producer --broker-list localhost:9092 --topic test-topic --property value.schema='{\"type\":\"record\",\"name\":\"myrecord\",\"fields\":[{\"name\":\"key\",\"type\":\"string\"}]}'" !
   }
 
   override def afterAll(): Unit = {
@@ -65,8 +65,6 @@ class DirectStreamSpec extends FlatSpec with BeforeAndAfterAll{
         else
         {
           "sudo /opt/confluent-3.3.0/bin/confluent destroy" !
-
-
 
           assert(true)
         }

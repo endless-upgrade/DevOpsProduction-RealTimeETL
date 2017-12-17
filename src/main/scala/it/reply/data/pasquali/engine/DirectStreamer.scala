@@ -38,7 +38,8 @@ case class DirectStreamer(){
 
   def initStreaming(appName : String, master : String, fetchIntervalSec : Int) : DirectStreamer = {
     conf = new SparkConf().setMaster(master).setAppName(appName)
-    ssc = new StreamingContext(conf, Seconds(fetchIntervalSec))
+    sc = SparkContext.getOrCreate(conf)
+    ssc = new StreamingContext(sc, Seconds(fetchIntervalSec))
     ssc.checkpoint("checkpoint")
     this
   }
