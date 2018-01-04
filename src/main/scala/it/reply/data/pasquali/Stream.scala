@@ -1,15 +1,24 @@
 package it.reply.data.pasquali
 
-import it.reply.data.pasquali.engine.{DirectStreamer, ETL}
-import it.reply.data.pasquali.model.TransformedDFs
+import com.typesafe.config.ConfigFactory
+import it.reply.data.pasquali.engine.DirectStreamer
 import it.reply.data.pasquali.storage.Storage
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
 
 object Stream {
 
   var toHive = true
   var onlyDebug = false
+
+  var SPARK_APPNAME = ""
+  var SPARK_MASTER = ""
+
+  var KAFKA_BOOTSTRAP_ADDR = ""
+  var KAFKA_BOOTSTRAP_PORT = ""
+  var KAFKA_GROUP = ""
+
+  var KUDU_ADDR = ""
+  var KUDU_PORT = ""
+
 
   def main(args: Array[String]): Unit = {
 
@@ -30,7 +39,7 @@ object Stream {
       println(
         """  USAGE: DirectStreamer topicName smallest|largest [ [-h] | [--debug | --hive] ]\n
       normally it push kakfa streams to hdfs folders and hive table\n
-      --test  just print the stream\n
+      --debug  just print the stream\n
       --hive  store only to hive datalake\n
       \n
       -h      show this usage""")
@@ -40,9 +49,9 @@ object Stream {
     if (args.size > 2) {
       if (args(2) == "-h") {
         println(
-          """  USAGE: DirectStreamer topicName [ [-h] | [--debug | --hive] ]\n
+          """  USAGE: DirectStreamer topicName smallest|largest [ [-h] | [--debug | --hive] ]\n
         normally it push kakfa streams to hdfs folders and hive table\n
-        --test  just print the stream\n
+        --debug  just print the stream\n
         --hive  store only to hive datalake\n
         \n
         -h      show this usage""")
@@ -64,14 +73,27 @@ object Stream {
     //onlyDebug = true
     //toHive = false
 
+
+    val configuration = ConfigFactory.load("BatchETL")
+    KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
+    KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")
+    KAFKA_GROUP = configuration.getString("rtetl.kafka.group")
+
+    KUDU_ADDR = configuration.getString("rtetl.kudu.address")
+    KUDU_PORT = configuration.getString("rtetl.kudu.port")
+
+    SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
+    SPARK_MASTER = configuration.getString("rtetl.spark.master")
+
+
     val storage: Storage = Storage()
-      .init("Real Time ETL", "local", true)
-      .initKudu("cloudera-vm.c.endless-upgrade-187216.internal", "7051")
+      .init(SPARK_APPNAME, SPARK_MASTER, true)
+      .initKudu(KUDU_ADDR, KUDU_PORT)
 
 
     val streamer: DirectStreamer = DirectStreamer()
-      .initStreaming("Real Time ETL", "local", 10)
-      .initKakfa("localhost", "9092", args(1), "group1", args(0))
+      .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)
+      .initKakfa(KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
 
 
     val spark = storage.spark

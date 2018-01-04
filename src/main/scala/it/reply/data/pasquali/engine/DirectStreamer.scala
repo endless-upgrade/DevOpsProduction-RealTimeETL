@@ -1,20 +1,15 @@
 package it.reply.data.pasquali.engine
 
 import _root_.kafka.serializer._
+import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.model.TransformedDFs
 import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
-import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka._
 
 case class DirectStreamer(){
-
-
-  val KUDU_MASTER = "cloudera-vm.c.endless-upgrade-187216.internal:7051"
-  val KUDU_TABLE_BASE = "impala::datamart."
 
 /*
   // TODO In the next update
@@ -36,12 +31,20 @@ case class DirectStreamer(){
 
   var kafkaParams : Map[String, String] = null
 
+  var KUDU_DATABASE = ""
+  var HIVE_DATABASE = ""
+
 
   def initStreaming(appName : String, master : String, fetchIntervalSec : Int) : DirectStreamer = {
     conf = new SparkConf().setMaster(master).setAppName(appName)
     sc = SparkContext.getOrCreate(conf)
     ssc = new StreamingContext(sc, Seconds(fetchIntervalSec))
     ssc.checkpoint("checkpoint")
+
+    val config = ConfigFactory.load("RealTimeETL")
+    KUDU_DATABASE = config.getString("rtetl.kudu.database")
+    HIVE_DATABASE = config.getString("rtetl.hive.database")
+
     this
   }
 
@@ -92,9 +95,9 @@ case class DirectStreamer(){
             dfs.toKudu.printSchema()
 
             println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
-            storage.writeDFtoHive(dfs.toHive, "append", "datalake", tableName)
+            storage.writeDFtoHive(dfs.toHive, "append", HIVE_DATABASE, tableName)
             println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
-            storage.insertKuduRows(dfs.toKudu, s"datamart.${tableName}")
+            storage.insertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
 
           }
         }
@@ -132,54 +135,4 @@ case class DirectStreamer(){
     ssc.start()
     ssc.awaitTermination()
   }
-
-
-/*
-  def storeToHive(spark : SparkSession, table : String, dataFrame: DataFrame) = {
-
-    //val mapped = rdd.map(raw => (IDGen.next, raw))
-    //val df = spark.createDataFrame(mapped).toDF("id", "raw")
-    dataFrame.registerTempTable("temptable")
-    spark.sql("insert into table data_reply_db.datalake select * from temptable")
-
-  }
-
-
-  def initIDGenerator(spark : SparkSession, table : String) = {
-
-    //spark.sql("insert into data_reply_db.datalake values (0, 'init')")
-    val start = spark.sql(s"select * from ${table}").count()
-    IDGen.init(start)
-
-
-    try
-    {
-      val start = spark.sql(s"select * from ${table}").count()
-      IDGen.init(start)
-    }
-    catch{
-
-      case e : Exception => IDGen.init(0)
-
-    }
-
-  }
-
-  object IDGen{
-
-    var start : Long= 0;
-
-    def init(s : Long) = {
-      start = s
-    }
-
-    def next : Long = {
-
-      val index = start
-      start += 1
-      index
-    }
-
-  }
-*/
 }

@@ -2,6 +2,7 @@ package it.reply.data.pasquali.storage
 
 import java.io.File
 
+import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.kudu.spark.kudu._
@@ -14,7 +15,9 @@ case class Storage() {
 
   var kuduMaster : String = "cloudera-vm.c.endless-upgrade-187216.internal"
   var kuduPort : String = "7051"
-  val KUDU = s"${kuduMaster}:${kuduPort}"
+  var KUDU = ""
+
+  var KUDU_TABLE_BASE = ""
 
   var hdfsServer : String = "cloudera-vm.c.endless-upgrade-187216.internal"
   var hdfsPort : String = "8020"
@@ -43,7 +46,12 @@ case class Storage() {
 
     kuduMaster = master
     kuduPort = port
+    KUDU = s"${kuduMaster}:${kuduPort}"
     kuduContext = new KuduContext(KUDU, spark.sparkContext)
+
+    val config = ConfigFactory.load("RealTimeETL")
+    KUDU_TABLE_BASE = config.getString("rtetl.kudu.table_base")
+
     this
   }
 
@@ -61,21 +69,21 @@ case class Storage() {
 
   def insertKuduRows(rows : DataFrame, table : String) : Unit = {
 
-    val tableName = s"impala::${table}"
+    val tableName = s"${KUDU_TABLE_BASE}${table}"
     kuduContext.insertRows(rows, tableName)
 
   }
 
   def updateKuduRows(rows : DataFrame, table : String) : Unit = {
 
-    val tableName = s"impala::${table}"
+    val tableName = s"${KUDU_TABLE_BASE}${table}"
     kuduContext.updateRows(rows, tableName)
 
   }
 
   def deleteKuduRows(keys : DataFrame, table : String) : Unit = {
 
-    val tableName = s"impala::${table}"
+    val tableName = s"${KUDU_TABLE_BASE}${table}"
     kuduContext.deleteRows(keys, tableName)
 
   }
@@ -85,7 +93,7 @@ case class Storage() {
     val df = spark.sqlContext.read.options(
       Map(
         "kudu.master" -> KUDU,
-        "kudu.table" -> s"impala::${kuduTestTable}"
+        "kudu.table" -> s"${KUDU_TABLE_BASE}${kuduTestTable}"
       )
     ).kudu
 
@@ -108,6 +116,9 @@ case class Storage() {
     return null
   }
 
+  def writeDFtoHive(df : DataFrame, mode : String, db : String, table : String) : Unit = {
+    df.write.mode(mode).saveAsTable(s"${db}.${table}")
+  }
 
   def remoteSecureCopy(inputFile : String,
                        remoteUser : String, remoteHost : String, remotePath : String) : String = {
@@ -139,9 +150,7 @@ case class Storage() {
     kuduContext = null
   }
 
-  def writeDFtoHive(df : DataFrame, mode : String, db : String, table : String) : Unit = {
-    df.write.mode(mode).saveAsTable(s"${db}.${table}")
-  }
+
 
 
 

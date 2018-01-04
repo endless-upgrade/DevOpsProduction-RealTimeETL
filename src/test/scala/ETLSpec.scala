@@ -1,3 +1,4 @@
+import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.ETL
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
@@ -19,9 +20,13 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
   override def beforeAll(): Unit = {
     super.beforeAll()
 
+    val configuration = ConfigFactory.load("RealTimeETL_staging")
+    val SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
+    val SPARK_MASTER = configuration.getString("rtetl.spark.master")
+
     val conf = new SparkConf()
-      .setAppName("Real Time ETL test")
-      .setMaster("local")
+      .setAppName(SPARK_APPNAME)
+      .setMaster(SPARK_MASTER)
 
     sc = SparkContext.getOrCreate(conf)
 
