@@ -2,8 +2,8 @@ package it.reply.data.pasquali.engine
 
 import _root_.kafka.serializer._
 import com.typesafe.config.ConfigFactory
+import it.reply.data.pasquali.Storage
 import it.reply.data.pasquali.model.TransformedDFs
-import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._

@@ -2,7 +2,7 @@ package it.reply.data.pasquali
 
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.DirectStreamer
-import it.reply.data.pasquali.storage.Storage
+import it.reply.data.pasquali.Storage
 
 object Stream {
 
