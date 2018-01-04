@@ -1,5 +1,7 @@
 package it.reply.data.pasquali.engine
 
+import java.io.File
+
 import _root_.kafka.serializer._
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.Storage
@@ -34,6 +36,8 @@ case class DirectStreamer(){
   var KUDU_DATABASE = ""
   var HIVE_DATABASE = ""
 
+  var CONFIG_FILE = "/opt/conf/RealTimeETL.conf"
+
 
   def initStreaming(appName : String, master : String, fetchIntervalSec : Int) : DirectStreamer = {
     conf = new SparkConf().setMaster(master).setAppName(appName)
@@ -41,7 +45,10 @@ case class DirectStreamer(){
     ssc = new StreamingContext(sc, Seconds(fetchIntervalSec))
     ssc.checkpoint("checkpoint")
 
-    val config = ConfigFactory.load("RealTimeETL")
+    //val config = ConfigFactory.load("RealTimeETL")
+
+    val config = ConfigFactory.parseFile(new File(CONFIG_FILE))
+
     KUDU_DATABASE = config.getString("rtetl.kudu.database")
     HIVE_DATABASE = config.getString("rtetl.hive.database")
 

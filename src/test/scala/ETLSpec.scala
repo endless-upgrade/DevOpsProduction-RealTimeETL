@@ -1,3 +1,5 @@
+import java.io.File
+
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.ETL
 import org.apache.spark.{SparkConf, SparkContext}
@@ -5,6 +7,8 @@ import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class ETLSpec extends FlatSpec with BeforeAndAfterAll{
+
+  var CONFIG_FILE = "/opt/conf/RealTimeETL_staging.conf"
 
   var tagSample = """
       {"schema":{"type":"struct","fields":[{"type":"int32","optional":false,"field":"id"},{"type":"int32","optional":true,"field":"userid"},{"type":"int32","optional":true,"field":"movieid"},{"type":"string","optional":true,"field":"tag"},{"type":"string","optional":true,"field":"timestamp"}],"optional":false,"name":"tags"},"payload":{"id":5120,"userid":1741,"movieid":246,"tag":"setting:Chicago","timestamp":"1186434000"}}
@@ -20,7 +24,10 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    val configuration = ConfigFactory.load("RealTimeETL_staging")
+    //val configuration = ConfigFactory.load("RealTimeETL_staging")
+
+    val configuration = ConfigFactory.parseFile(new File(CONFIG_FILE))
+
     val SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
     val SPARK_MASTER = configuration.getString("rtetl.spark.master")
 

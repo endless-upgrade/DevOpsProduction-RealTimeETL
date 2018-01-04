@@ -1,5 +1,7 @@
 package it.reply.data.pasquali
 
+import java.io.File
+
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.DirectStreamer
 import it.reply.data.pasquali.Storage
@@ -19,6 +21,7 @@ object Stream {
   var KUDU_ADDR = ""
   var KUDU_PORT = ""
 
+  var CONFIG_FILE = "/opt/conf/RealTimeETL.conf"
 
   def main(args: Array[String]): Unit = {
 
@@ -74,7 +77,10 @@ object Stream {
     //toHive = false
 
 
-    val configuration = ConfigFactory.load("BatchETL")
+    //val configuration = ConfigFactory.load("BatchETL")
+
+    val configuration = ConfigFactory.parseFile(new File(CONFIG_FILE))
+
     KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
     KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")
     KAFKA_GROUP = configuration.getString("rtetl.kafka.group")
