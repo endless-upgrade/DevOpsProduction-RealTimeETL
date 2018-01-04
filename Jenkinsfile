@@ -32,6 +32,8 @@ pipeline {
     }
     stage('Deploy') {
       steps {
+        input(message: 'Ready to deploy in production??', ok: 'GO')
+        echo 'Soooooooooo lets deploy this shit'
         sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
       }
     }
