@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 
-case class DirectStreamer(){
+case class DirectStreamer(configFile : String){
 
 /*
   // TODO In the next update
@@ -36,8 +36,6 @@ case class DirectStreamer(){
   var KUDU_DATABASE = ""
   var HIVE_DATABASE = ""
 
-  var CONFIG_FILE = "/opt/conf/RealTimeETL.conf"
-
 
   def initStreaming(appName : String, master : String, fetchIntervalSec : Int) : DirectStreamer = {
     conf = new SparkConf().setMaster(master).setAppName(appName)
@@ -47,7 +45,7 @@ case class DirectStreamer(){
 
     //val config = ConfigFactory.load("RealTimeETL")
 
-    val config = ConfigFactory.parseFile(new File(CONFIG_FILE))
+    val config = ConfigFactory.parseFile(new File(configFile))
 
     KUDU_DATABASE = config.getString("rtetl.kudu.database")
     HIVE_DATABASE = config.getString("rtetl.hive.database")

@@ -4,7 +4,6 @@ import java.io.File
 
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.DirectStreamer
-import it.reply.data.pasquali.Storage
 
 object Stream {
 
@@ -97,7 +96,7 @@ object Stream {
       .initKudu(KUDU_ADDR, KUDU_PORT)
 
 
-    val streamer: DirectStreamer = DirectStreamer()
+    val streamer: DirectStreamer = DirectStreamer(CONFIG_FILE)
       .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)
       .initKakfa(KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
 
