@@ -20,7 +20,8 @@ object Stream {
   var KUDU_ADDR = ""
   var KUDU_PORT = ""
 
-  var CONFIG_FILE = "/opt/conf/RealTimeETL.conf"
+  var CONF_DIR = ""
+  var CONFIG_FILE = "RealTimeETL.conf"
 
   def main(args: Array[String]): Unit = {
 
@@ -77,8 +78,8 @@ object Stream {
 
 
     //val configuration = ConfigFactory.load("BatchETL")
-
-    val configuration = ConfigFactory.parseFile(new File(CONFIG_FILE))
+    CONF_DIR = scala.util.Properties.envOrElse("DEVOPS_CONF_DIR", "conf")
+    val configuration = ConfigFactory.parseFile(new File(s"${CONF_DIR}/${CONFIG_FILE}"))
 
     KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
     KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")

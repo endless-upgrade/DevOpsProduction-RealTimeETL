@@ -4,13 +4,7 @@ pipeline {
     stage('Config System') {
       steps {
         echo 'Setup the system'
-        sh 'pwd'
-        sh 'sudo yum install wget -y'
-        sh 'sudo yum install curl -y'
-        sh 'sudo yum install java-1.8.0-openjdk -y'
-        sh 'sudo wget -O sbt-0.13.12.rpm http://dl.bintray.com/sbt/rpm/sbt-0.13.12.rpm'
-        sh 'sudo yum localinstall sbt-0.13.12.rpm -y'
-        sh 'cp -Rf conf/* /opt/conf/'
+        echo 'wget, curl, java, sbt and spark are now installed by Config Management system :)'
       }
     }
     stage('Test the System') {
@@ -32,9 +26,9 @@ pipeline {
     }
     stage('Deploy') {
       steps {
-        input(message: 'Ready to deploy in production??', ok: 'GO')
         echo 'Soooooooooo lets deploy this shit'
         sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
+        sh 'cp -Rf conf/* /opt/deploy/realTimeETL/'
       }
     }
   }

@@ -8,7 +8,8 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class ETLSpec extends FlatSpec with BeforeAndAfterAll{
 
-  var CONFIG_FILE = "/opt/conf/RealTimeETL_staging.conf"
+  var CONF_DIR = ""
+  var CONFIG_FILE = "RealTimeETL_staging.conf"
 
   var tagSample = """
       {"schema":{"type":"struct","fields":[{"type":"int32","optional":false,"field":"id"},{"type":"int32","optional":true,"field":"userid"},{"type":"int32","optional":true,"field":"movieid"},{"type":"string","optional":true,"field":"tag"},{"type":"string","optional":true,"field":"timestamp"}],"optional":false,"name":"tags"},"payload":{"id":5120,"userid":1741,"movieid":246,"tag":"setting:Chicago","timestamp":"1186434000"}}
@@ -26,7 +27,8 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
 
     //val configuration = ConfigFactory.load("RealTimeETL_staging")
 
-    val configuration = ConfigFactory.parseFile(new File(CONFIG_FILE))
+    CONF_DIR = scala.util.Properties.envOrElse("DEVOPS_CONF_DIR", "conf")
+    val configuration = ConfigFactory.parseFile(new File(s"${CONF_DIR}/${CONFIG_FILE}"))
 
     val SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
     val SPARK_MASTER = configuration.getString("rtetl.spark.master")
