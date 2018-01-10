@@ -21,7 +21,7 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'sbt clean compile package'
+        sh 'sbt clean assembly'
       }
     }
     stage('Deploy') {
