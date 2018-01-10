@@ -91,16 +91,18 @@ object Stream {
     SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
     SPARK_MASTER = configuration.getString("rtetl.spark.master")
 
+    println("Configurations")
+    println(s"APP_NAME = $SPARK_APPNAME")
+    println(s"MASTER = $SPARK_MASTER")
+
 
     val storage: Storage = Storage()
-      .init(SPARK_APPNAME, SPARK_MASTER, true)
+      .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT)
-
 
     val streamer: DirectStreamer = DirectStreamer(CONFIG_FILE)
       .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)
       .initKakfa(KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
-
 
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
