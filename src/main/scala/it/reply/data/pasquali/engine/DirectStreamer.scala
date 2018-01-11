@@ -4,7 +4,6 @@ import java.io.File
 
 import _root_.kafka.serializer._
 import com.typesafe.config.ConfigFactory
-import it.reply.data.pasquali.Storage
 import it.reply.data.pasquali.model.TransformedDFs
 import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
