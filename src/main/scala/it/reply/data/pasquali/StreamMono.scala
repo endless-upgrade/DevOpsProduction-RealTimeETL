@@ -139,6 +139,7 @@ object StreamMono {
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
 
+
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
 
@@ -179,12 +180,27 @@ object StreamMono {
                     fetchIntervalSec : Int,
                     bootstrapServer : String,
                     bootstrapPort : String,
-                    offset : String, groupID : String, singleTopic : String): Unit ={
+                    offset : String,
+                    groupID : String,
+                    singleTopic : String): Unit ={
 
     conf = new SparkConf().setMaster(master).setAppName(appName)
     sc = SparkContext.getOrCreate(conf)
     ssc = new StreamingContext(sc, Seconds(fetchIntervalSec))
     ssc.checkpoint("checkpoint")
+
+
+    this.topics = Set[String](singleTopic)
+
+    /*
+    bootstrap.servers -> "localhost:9092"
+    group.id -> "group1"
+    */
+
+    kafkaParams = Map[String, String](
+      "bootstrap.servers" -> s"${bootstrapServer}:${bootstrapPort}",
+      "auto.offset.reset" -> offset,
+      "group.id" -> groupID)
   }
 
 }
