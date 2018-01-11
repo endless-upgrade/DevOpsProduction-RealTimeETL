@@ -93,8 +93,10 @@ case class DirectStreamer(configFile : String){
           else{
             val stringRDD = rdd.map(entry => entry._2)
 
-            val dfs : TransformedDFs =
-              ETL.transformRDD(stringRDD, spark, tableName)
+            val jsonDF = spark.sqlContext.jsonRDD(stringRDD)
+            val etl = ETLProcess()
+            val dfs = etl.transformRDD(jsonDF, tableName)
+            //val dfs : TransformedDFs = ETL.transformRDD(stringRDD, spark, tableName)
 
             dfs.toHive.printSchema()
             dfs.toKudu.printSchema()

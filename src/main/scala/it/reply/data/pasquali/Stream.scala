@@ -105,7 +105,7 @@ object Stream {
       .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT)
 
-    val streamer: DirectStreamer = DirectStreamer(CONFIG_FILE)
+    val streamer: DirectStreamer = DirectStreamer(s"${CONF_DIR}/${CONFIG_FILE}")
       .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)
       .initKakfa(KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
 
