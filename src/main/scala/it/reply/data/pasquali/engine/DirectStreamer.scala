@@ -6,6 +6,7 @@ import _root_.kafka.serializer._
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.Storage
 import it.reply.data.pasquali.model.TransformedDFs
+import it.reply.data.pasquali.storage.Storage
 import org.apache.spark._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
@@ -100,7 +101,7 @@ case class DirectStreamer(configFile : String){
             println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
             storage.writeDFtoHive(dfs.toHive, "append", HIVE_DATABASE, tableName)
             println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
-            storage.insertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
+            storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
 
           }
         }
