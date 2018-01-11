@@ -4,6 +4,7 @@ import java.io.File
 
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.DirectStreamer
+import it.reply.data.pasquali.storage.Storage
 
 object Stream {
 
@@ -101,7 +102,7 @@ object Stream {
     println(s"MASTER = $SPARK_MASTER")
 
 
-    val storage: Storage = Storage()
+    val storage : Storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT)
 

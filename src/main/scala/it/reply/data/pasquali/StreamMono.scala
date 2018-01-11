@@ -5,6 +5,7 @@ import java.io.File
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.{DirectStreamer, ETL}
 import it.reply.data.pasquali.model.TransformedDFs
+import it.reply.data.pasquali.storage.Storage
 import kafka.serializer.StringDecoder
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.kafka.KafkaUtils
@@ -125,8 +126,7 @@ object StreamMono {
     println(s"APP_NAME = $SPARK_APPNAME")
     println(s"MASTER = $SPARK_MASTER")
 
-
-    val storage: Storage = Storage()
+    storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT)
 
@@ -164,7 +164,7 @@ object StreamMono {
             println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
             storage.writeDFtoHive(dfs.toHive, "append", HIVE_DATABASE, tableName)
             println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
-            storage.insertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
+            storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
         }
       }
