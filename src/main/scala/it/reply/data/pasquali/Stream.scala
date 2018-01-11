@@ -97,6 +97,8 @@ object Stream {
     SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
     SPARK_MASTER = configuration.getString("rtetl.spark.master")
 
+    val KUDU_TABLE_BASE = configuration.getString("rtetl.kudu.table_base")
+
     println("Configurations")
     println(s"APP_NAME = $SPARK_APPNAME")
     println(s"MASTER = $SPARK_MASTER")
@@ -104,7 +106,7 @@ object Stream {
 
     val storage : Storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
-      .initKudu(KUDU_ADDR, KUDU_PORT)
+      .initKudu(KUDU_ADDR, KUDU_PORT, KUDU_TABLE_BASE)
 
     val streamer: DirectStreamer = DirectStreamer(s"${CONF_DIR}/${CONFIG_FILE}")
       .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)

@@ -26,6 +26,7 @@ object StreamMono {
 
   var KUDU_ADDR = ""
   var KUDU_PORT = ""
+  var KUDU_TABLE_BASE = ""
 
   var CONF_DIR = ""
   var CONFIG_FILE = "RealTimeETL.conf"
@@ -122,13 +123,15 @@ object StreamMono {
     KUDU_DATABASE = configuration.getString("rtetl.kudu.database")
     HIVE_DATABASE = configuration.getString("rtetl.hive.database")
 
+    KUDU_TABLE_BASE = configuration.getString("rtetl.kudu.table_base")
+
     println("Configurations")
     println(s"APP_NAME = $SPARK_APPNAME")
     println(s"MASTER = $SPARK_MASTER")
 
     storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
-      .initKudu(KUDU_ADDR, KUDU_PORT)
+      .initKudu(KUDU_ADDR, KUDU_PORT, KUDU_TABLE_BASE)
 
     initStreaming(SPARK_APPNAME, SPARK_MASTER, 10, KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
 
