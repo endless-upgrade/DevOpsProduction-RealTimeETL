@@ -30,6 +30,7 @@ pipeline {
         echo 'Soooooooooo lets deploy this shit'
         sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
         sh 'sudo cp -Rf conf/* /opt/deploy/realTimeETL/'
+        sh 'sudo cp target/*/*.jar /opt/staging/IntegrationStagingProject/lib'
       }
     }
   }

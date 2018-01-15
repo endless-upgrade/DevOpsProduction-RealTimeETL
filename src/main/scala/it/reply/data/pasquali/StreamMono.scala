@@ -102,13 +102,16 @@ object StreamMono {
 
 
     //val configuration = ConfigFactory.load("BatchETL")
-    CONF_DIR = scala.util.Properties.envOrElse("DEVOPS_CONF_DIR", "conf")
+    //CONF_DIR = scala.util.Properties.envOrElse("DEVOPS_CONF_DIR", "conf")
+
+    CONF_DIR = "conf"
 
     println("\n")
     println(CONF_DIR)
     println("\n")
 
-    val configuration = ConfigFactory.parseFile(new File(s"${CONF_DIR}/${CONFIG_FILE}"))
+    //val configuration = ConfigFactory.parseFile(new File(s"${CONF_DIR}/${CONFIG_FILE}"))
+    val configuration = ConfigFactory.load()
 
     KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
     KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")
