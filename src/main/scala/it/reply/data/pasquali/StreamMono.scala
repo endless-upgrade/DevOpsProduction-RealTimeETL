@@ -178,7 +178,6 @@ object StreamMono {
 
     ssc.start()
     ssc.awaitTermination()
-
   }
 
   def initStreaming(appName : String,
