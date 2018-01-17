@@ -13,7 +13,7 @@ pipeline {
         sh 'sbt about'
       }
     }
-    stage('Test scalatest') {
+    stage('Unit Tests') {
       steps {
         sh 'sbt clean test'
         archiveArtifacts 'target/test-reports/*.xml'
@@ -25,12 +25,21 @@ pipeline {
         archiveArtifacts 'target/scala-*/*.jar'
       }
     }
-    stage('Deploy') {
+    stage('Staging Deploy') {
       steps {
-        echo 'Soooooooooo lets deploy this shit'
         sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
         sh 'sudo cp -Rf conf/* /opt/deploy/realTimeETL/'
         sh 'sudo cp target/*/*.jar /opt/staging/IntegrationStagingProject/lib'
+      }
+    }
+    stage('Integration Tests') {
+      steps {
+        sh 'cd /opt/staging/IntegrationStagingProject/ && sbt clean test'
+      }
+    }
+    stage('Production Deploy') {
+      steps {
+        echo 'Safe to Deploy in Production, Great Job :D'
       }
     }
   }
