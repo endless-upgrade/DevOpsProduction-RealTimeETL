@@ -153,7 +153,7 @@ object StreamMono {
     val gaugeKuduNumber = Gauge.build().name(LABEL_KUDU_NUMBER)
       .help(s"Number of $tableName in kudu datamart").register(registry)
 
-    val gaugeDuration = Gauge.build().name(LABEL_NUMBER_OF_NEW)
+    val gaugeDuration = Gauge.build().name(LABEL_PROCESS_DURATION)
       .help(s"Duration of the single elaboration").register(registry)
 
     //*******************************************************************************
