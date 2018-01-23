@@ -5,13 +5,13 @@ import java.io.File
 import _root_.kafka.serializer._
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.model.TransformedDFs
-import it.reply.data.pasquali.storage.Storage
+import it.reply.data.pasquali.Storage
 import org.apache.spark._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 
-case class DirectStreamer(configFile : String){
+case class DirectStreamer(){
 
 /*
   // TODO In the next update
@@ -45,7 +45,7 @@ case class DirectStreamer(configFile : String){
 
     //val config = ConfigFactory.load("RealTimeETL")
 
-    val config = ConfigFactory.parseFile(new File(configFile))
+    val config = ConfigFactory.load()
 
     KUDU_DATABASE = config.getString("rtetl.kudu.database")
     HIVE_DATABASE = config.getString("rtetl.hive.database")

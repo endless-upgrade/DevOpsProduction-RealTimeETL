@@ -1,11 +1,10 @@
 package it.reply.data.pasquali
 
-import java.io.File
-
 import com.typesafe.config.ConfigFactory
-import it.reply.data.pasquali.engine.{DirectStreamer, ETL}
+import io.prometheus.client.{CollectorRegistry, Gauge}
+import io.prometheus.client.exporter.PushGateway
+import it.reply.data.pasquali.engine.ETL
 import it.reply.data.pasquali.model.TransformedDFs
-import it.reply.data.pasquali.storage.Storage
 import kafka.serializer.StringDecoder
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.kafka.KafkaUtils
@@ -16,25 +15,6 @@ object StreamMono {
 
   var toHive = true
   var onlyDebug = false
-
-  var SPARK_APPNAME = ""
-  var SPARK_MASTER = ""
-
-  var KAFKA_BOOTSTRAP_ADDR = ""
-  var KAFKA_BOOTSTRAP_PORT = ""
-  var KAFKA_GROUP = ""
-
-  var KUDU_ADDR = ""
-  var KUDU_PORT = ""
-  var KUDU_TABLE_BASE = ""
-
-  var CONF_DIR = ""
-  var CONFIG_FILE = "RealTimeETL.conf"
-
-  var KUDU_DATABASE = ""
-  var HIVE_DATABASE = ""
-
-  // ********************************************************
 
   var conf : SparkConf = null
   var sc : SparkContext = null
@@ -104,7 +84,7 @@ object StreamMono {
     //val configuration = ConfigFactory.load("BatchETL")
     //CONF_DIR = scala.util.Properties.envOrElse("DEVOPS_CONF_DIR", "conf")
 
-    CONF_DIR = "conf"
+    val CONF_DIR = "conf"
 
     println("\n")
     println(CONF_DIR)
@@ -113,24 +93,36 @@ object StreamMono {
     //val configuration = ConfigFactory.parseFile(new File(s"${CONF_DIR}/${CONFIG_FILE}"))
     val configuration = ConfigFactory.load()
 
-    KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
-    KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")
-    KAFKA_GROUP = configuration.getString("rtetl.kafka.group")
+    val KAFKA_BOOTSTRAP_ADDR  = configuration.getString("rtetl.kafka.bootstrap.address")
+    val KAFKA_BOOTSTRAP_PORT = configuration.getString("rtetl.kafka.bootstrap.port")
+    val KAFKA_GROUP = configuration.getString("rtetl.kafka.group")
 
-    KUDU_ADDR = configuration.getString("rtetl.kudu.address")
-    KUDU_PORT = configuration.getString("rtetl.kudu.port")
+    val KUDU_ADDR = configuration.getString("rtetl.kudu.address")
+    val KUDU_PORT = configuration.getString("rtetl.kudu.port")
 
-    SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
-    SPARK_MASTER = configuration.getString("rtetl.spark.master")
+    val SPARK_APPNAME = configuration.getString("rtetl.spark.app_name")
+    val SPARK_MASTER = configuration.getString("rtetl.spark.master")
 
-    KUDU_DATABASE = configuration.getString("rtetl.kudu.database")
-    HIVE_DATABASE = configuration.getString("rtetl.hive.database")
+    val KUDU_DATABASE = configuration.getString("rtetl.kudu.database")
+    val HIVE_DATABASE = configuration.getString("rtetl.hive.database")
 
-    KUDU_TABLE_BASE = configuration.getString("rtetl.kudu.table_base")
+    val KUDU_TABLE_BASE = configuration.getString("rtetl.kudu.table_base")
 
     println("Configurations")
     println(s"APP_NAME = $SPARK_APPNAME")
     println(s"MASTER = $SPARK_MASTER")
+
+
+    //*************************************************************************
+    // Metrics
+
+    val ENV = configuration.getString("rtetl.metrics.environment")
+    val JOB_NAME = configuration.getString("rtetl.metrics.job_name")
+
+    val GATEWAY_ADDR = configuration.getString("rtetl.metrics.gateway.address")
+    val GATEWAY_PORT = configuration.getString("rtetl.metrics.gateway.port")
+
+    //*************************************************************************
 
     storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
@@ -138,13 +130,33 @@ object StreamMono {
 
     initStreaming(SPARK_APPNAME, SPARK_MASTER, 10, KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
 
-    val streamer: DirectStreamer = DirectStreamer(s"${CONF_DIR}/${CONFIG_FILE}")
-      .initStreaming(SPARK_APPNAME, SPARK_MASTER, 10)
-      .initKakfa(KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
-
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
 
+    //*******************************************************************************
+
+
+    val LABEL_NUMBER_OF_NEW = s"${ENV}_${configuration.getString("rtetl.metrics.labels.number_of_new")}_$tableName"
+    val LABEL_HIVE_NUMBER = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.hive_number")}"
+    val LABEL_KUDU_NUMBER = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.kudu_number")}"
+    val LABEL_PROCESS_DURATION = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.process_duration")}"
+
+    val pushGateway : PushGateway = new PushGateway(s"$GATEWAY_ADDR:$GATEWAY_PORT")
+    val registry = new CollectorRegistry
+
+    val gaugeNewElementsNumber = Gauge.build().name(LABEL_NUMBER_OF_NEW)
+      .help(s"Number of new $tableName extract from topic").register(registry)
+
+    val gaugeHiveNumber = Gauge.build().name(LABEL_HIVE_NUMBER)
+      .help(s"Number of $tableName in hive datalake").register(registry)
+
+    val gaugeKuduNumber = Gauge.build().name(LABEL_KUDU_NUMBER)
+      .help(s"Number of $tableName in kudu datamart").register(registry)
+
+    val gaugeDuration = Gauge.build().name(LABEL_NUMBER_OF_NEW)
+      .help(s"Duration of the single elaboration").register(registry)
+
+    //*******************************************************************************
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
@@ -156,6 +168,9 @@ object StreamMono {
           println("[ INFO ] Empty RDD")
         }
         else{
+
+          val timer = gaugeDuration.startTimer()
+
           val stringRDD = rdd.map(entry => entry._2)
           val dfs : TransformedDFs = ETL.transformRDD(stringRDD, spark, tableName)
 
@@ -172,6 +187,15 @@ object StreamMono {
             println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
             storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
+
+          timer.setDuration()
+
+          gaugeNewElementsNumber.set(rdd.count())
+          gaugeHiveNumber.set(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
+          gaugeKuduNumber.set(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
+
+          pushGateway.push(registry, JOB_NAME)
+
         }
       }
     )

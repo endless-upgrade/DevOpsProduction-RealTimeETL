@@ -24,6 +24,14 @@ libraryDependencies ++= Seq(
   "com.yammer.metrics" % "metrics-core" % "2.2.0"
 )
 
+libraryDependencies ++= Seq(
+
+  "io.prometheus" % "simpleclient" % "0.1.0",
+  "io.prometheus" % "simpleclient_common" % "0.1.0",
+  "io.prometheus" % "simpleclient_hotspot" % "0.1.0",
+  "io.prometheus" % "simpleclient_pushgateway" % "0.1.0",
+)
+
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.2" % "test"
 
 assemblyMergeStrategy in assembly := {
