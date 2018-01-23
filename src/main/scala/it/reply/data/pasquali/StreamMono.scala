@@ -156,6 +156,12 @@ object StreamMono {
     val gaugeDuration = Gauge.build().name(LABEL_PROCESS_DURATION)
       .help(s"Duration of the single elaboration").register(registry)
 
+    MetricsCollector.pushGateway = pushGateway
+    MetricsCollector.gaugeDuration = gaugeDuration
+    MetricsCollector.gaugeNewElementsNumber = gaugeNewElementsNumber
+    MetricsCollector.gaugeKuduNumber = gaugeKuduNumber
+    MetricsCollector.gaugeHiveNumber = gaugeHiveNumber
+
     //*******************************************************************************
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
@@ -169,7 +175,7 @@ object StreamMono {
         }
         else{
 
-          val timer = gaugeDuration.startTimer()
+          MetricsCollector.startTimer()
 
           val stringRDD = rdd.map(entry => entry._2)
           val dfs : TransformedDFs = ETL.transformRDD(stringRDD, spark, tableName)
@@ -188,14 +194,13 @@ object StreamMono {
             storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
 
-          timer.setDuration()
+          MetricsCollector.stopTimer()
 
-          gaugeNewElementsNumber.set(rdd.count())
-          gaugeHiveNumber.set(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
-          gaugeKuduNumber.set(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
+          MetricsCollector.setNewElementsNumber(rdd.count())
+          MetricsCollector.setHiveNumber(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
+          MetricsCollector.setKuduNumber(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
 
-          pushGateway.push(registry, JOB_NAME)
-
+          MetricsCollector.push(registry, JOB_NAME)
         }
       }
     )
@@ -203,6 +208,27 @@ object StreamMono {
     ssc.start()
     ssc.awaitTermination()
   }
+
+  object MetricsCollector{
+
+    var gaugeNewElementsNumber : Gauge = null
+    var gaugeHiveNumber : Gauge = null
+    var gaugeKuduNumber : Gauge = null
+    var gaugeDuration : Gauge = null
+
+    var pushGateway : PushGateway = null
+
+    var timer : Gauge.Timer = null
+
+    def setHiveNumber(value : Double) : Unit = gaugeHiveNumber.set(value)
+    def setKuduNumber(value : Double) : Unit = gaugeKuduNumber.set(value)
+    def setNewElementsNumber(value : Double) : Unit = gaugeNewElementsNumber.set(value)
+    def startTimer() : Unit = {timer = gaugeDuration.startTimer()}
+    def stopTimer() : Unit = {timer.setDuration()}
+
+    def push(registry: CollectorRegistry, jobName : String) = { pushGateway.push(registry, jobName)}
+  }
+
 
   def initStreaming(appName : String,
                     master : String,
