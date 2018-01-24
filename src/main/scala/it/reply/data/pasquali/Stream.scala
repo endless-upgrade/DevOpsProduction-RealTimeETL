@@ -4,7 +4,6 @@ import java.io.File
 
 import com.typesafe.config.ConfigFactory
 import it.reply.data.pasquali.engine.DirectStreamer
-import it.reply.data.pasquali.Storage
 
 object Stream {
 

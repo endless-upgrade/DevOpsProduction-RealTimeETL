@@ -156,11 +156,11 @@ object StreamMono {
     val gaugeDuration = Gauge.build().name(LABEL_PROCESS_DURATION)
       .help(s"Duration of the single elaboration").register(registry)
 
-    MetricsCollector.pushGateway = pushGateway
-    MetricsCollector.gaugeDuration = gaugeDuration
-    MetricsCollector.gaugeNewElementsNumber = gaugeNewElementsNumber
-    MetricsCollector.gaugeKuduNumber = gaugeKuduNumber
-    MetricsCollector.gaugeHiveNumber = gaugeHiveNumber
+//    MetricsCollector.pushGateway = pushGateway
+//    MetricsCollector.gaugeDuration = gaugeDuration
+//    MetricsCollector.gaugeNewElementsNumber = gaugeNewElementsNumber
+//    MetricsCollector.gaugeKuduNumber = gaugeKuduNumber
+//    MetricsCollector.gaugeHiveNumber = gaugeHiveNumber
 
     //*******************************************************************************
 
@@ -175,7 +175,7 @@ object StreamMono {
         }
         else{
 
-          MetricsCollector.startTimer()
+//          MetricsCollector.startTimer()
 
           val stringRDD = rdd.map(entry => entry._2)
           val dfs : TransformedDFs = ETL.transformRDD(stringRDD, spark, tableName)
@@ -194,13 +194,13 @@ object StreamMono {
             storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
 
-          MetricsCollector.stopTimer()
-
-          MetricsCollector.setNewElementsNumber(rdd.count())
-          MetricsCollector.setHiveNumber(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
-          MetricsCollector.setKuduNumber(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
-
-          MetricsCollector.push(registry, JOB_NAME)
+//          MetricsCollector.stopTimer()
+//
+//          MetricsCollector.setNewElementsNumber(rdd.count())
+//          MetricsCollector.setHiveNumber(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
+//          MetricsCollector.setKuduNumber(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
+//
+//          MetricsCollector.push(registry, JOB_NAME)
         }
       }
     )
