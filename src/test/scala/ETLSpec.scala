@@ -106,7 +106,7 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     timer.setDuration()
 
     try{
-      pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+      pushGateway.pushAdd(registry, s"${ENV}_${JOB_NAME}")
     }catch{
       case _ : Exception => println("Unable to reach Metric PushGateway")
     }
@@ -123,10 +123,11 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     assert(hive(4) == "1186434000")
 
     val kudu = tagsEntry.toKudu.collect()(0)
-    assert(kudu(0) == 1741)
-    assert(kudu(1) == 246)
-    assert(kudu(2) == "setting:Chicago")
-    assert(kudu(3) == "1186434000")
+    assert(hive(0) == 5120)
+    assert(hive(1) == 1741)
+    assert(hive(2) == 246)
+    assert(hive(3) == "setting:Chicago")
+    assert(hive(4) == "1186434000")
   }
 
   it should "take a generic json Rating and generate the rating table entry" in {
@@ -138,7 +139,7 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
 
     timer.setDuration()
     try{
-      pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+      pushGateway.pushAdd(registry, s"${ENV}_${JOB_NAME}")
     }catch{
       case _ : Exception => println("Unable to reach Metric PushGateway")
     }
@@ -155,10 +156,11 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     assert(hive(4) == "1101142930")
 
     val kudu = ratingsEntry.toKudu.collect()(0)
-    assert(kudu(0) == 153)
-    assert(kudu(1) == 508)
-    assert(kudu(2) == 4.5)
-    assert(kudu(3) == "1101142930")
+    assert(hive(0) == 39478)
+    assert(hive(1) == 153)
+    assert(hive(2) == 508)
+    assert(hive(3) == 4.5)
+    assert(hive(4) == "1101142930")
   }
 
 

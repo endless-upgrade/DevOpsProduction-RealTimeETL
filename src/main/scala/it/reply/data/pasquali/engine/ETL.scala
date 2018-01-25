@@ -9,7 +9,8 @@ object ETL {
   def transformTags(jsonDF : DataFrame) : TransformedDFs = {
 
     val cols = Seq("id", "userid", "movieid", "tag", "timestamp")
-    val colsKudu = Seq("userid", "movieid", "tag", "time")
+    //val colsKudu = Seq("userid", "movieid", "tag", "time")
+    val colsKudu = Seq("id", "userid", "movieid", "tag", "time")
 
     val toHive = jsonDF
       .withColumn("id", jsonDF("payload.id"))
@@ -28,7 +29,8 @@ object ETL {
   def transformRatings(jsonDF : DataFrame) : TransformedDFs = {
 
     val cols = Seq("id", "userid", "movieid", "rating", "timestamp")
-    val colsKudu = Seq("userid", "movieid", "rating", "time")
+    //val colsKudu = Seq("userid", "movieid", "rating", "time")
+    val colsKudu = Seq("id", "userid", "movieid", "rating", "time")
 
     val toHive = jsonDF
       .withColumn("id", jsonDF("payload.id"))
