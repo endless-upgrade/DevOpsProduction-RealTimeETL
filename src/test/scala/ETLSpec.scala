@@ -1,6 +1,8 @@
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
+import io.prometheus.client.exporter.PushGateway
+import io.prometheus.client.{CollectorRegistry, Gauge}
 import it.reply.data.pasquali.engine.ETL
 import it.reply.data.pasquali.utils.MetricPoster
 import org.apache.spark.{SparkConf, SparkContext}
@@ -33,8 +35,10 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
   var GATEWAY_ADDR = ""
   var GATEWAY_PORT = ""
 
-  var ratings_duration : Long = 0
-  var tags_duration : Long = 0
+  var gaugeRatingsDuration : Gauge = null
+  var gaugeTagsDuration : Gauge = null
+  val registry = new CollectorRegistry
+  var pushGateway : PushGateway = null
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -63,19 +67,18 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     GATEWAY_PORT = configuration.getString("rtetl.metrics.gateway.port")
     LABEL_PROCESS_DURATION = configuration.getString("rtetl.metrics.labels.process_duration")
 
+    pushGateway = new PushGateway(s"$GATEWAY_ADDR:$GATEWAY_PORT")
+
+    gaugeRatingsDuration = Gauge.build().name(s"ratings_${LABEL_PROCESS_DURATION}")
+      .help("Duration of the transformation process for ratings").register(registry)
+
+    gaugeTagsDuration = Gauge.build().name(s"tags_${LABEL_PROCESS_DURATION}")
+      .help("Duration of the transformation process for tags").register(registry)
+
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-
-    MetricPoster.postMultipleMetrics(Array("gauge", "gauge"),
-      s"$GATEWAY_ADDR:$GATEWAY_PORT",
-      Array(s"tags_${LABEL_PROCESS_DURATION}", s"ratings_${LABEL_PROCESS_DURATION}"),
-      Array("Duration of the transformation process for tags", "Duration of the transformation process for ratings"),
-      Array(tags_duration, ratings_duration),
-      JOB_NAME,
-      s"${ENV}")
-
 
     sc.stop()
     spark.stop()
@@ -95,14 +98,13 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
 
   it should "take a generic json Tag and generate the Tag table entry" in {
 
-
-    val TAGS_PROCESS_DURATION = s"tags_${LABEL_PROCESS_DURATION}"
-    MetricPoster.startTimer(TAGS_PROCESS_DURATION)
+    val timer = gaugeTagsDuration.startTimer()
 
     val sampleRDD = sc.parallelize(Seq(tagSample))
     val tagsEntry = ETL.transformRDD(sampleRDD, spark, "tags")
 
-    tags_duration = MetricPoster.stopTimer(TAGS_PROCESS_DURATION)
+    timer.setDuration()
+    pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
 
     //{"id":5120,"userid":1741,"movieid":246,"tag":"setting:Chicago","timestamp":"1186434000"}
 
@@ -124,13 +126,13 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
 
   it should "take a generic json Rating and generate the rating table entry" in {
 
-    val RATINGS_LABEL_DURATION = s"ratings_${LABEL_PROCESS_DURATION}"
-    MetricPoster.startTimer(RATINGS_LABEL_DURATION)
+    val timer = gaugeRatingsDuration.startTimer()
 
     val sampleRDD = sc.parallelize(Seq(ratingSample))
     val ratingsEntry = ETL.transformRDD(sampleRDD, spark, "ratings")
 
-    ratings_duration = MetricPoster.stopTimer(RATINGS_LABEL_DURATION)
+    timer.setDuration()
+    pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
 
     //{"id":39478,"userid":153,"movieid":508,"rating":4.5,"timestamp":"1101142930"}
 
