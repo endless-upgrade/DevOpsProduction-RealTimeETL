@@ -115,7 +115,19 @@ object StreamMono {
       .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT, KUDU_TABLE_BASE)
 
-    initStreaming(SPARK_APPNAME, SPARK_MASTER, 10, KAFKA_BOOTSTRAP_ADDR, KAFKA_BOOTSTRAP_PORT, args(1), KAFKA_GROUP, args(0))
+    val offset = args(1)
+    val singleTopic = args(0)
+
+    val mode = if(offset.contains("largest")) "append" else "overwrite"
+
+    initStreaming(SPARK_APPNAME,
+      SPARK_MASTER,
+      10,
+      KAFKA_BOOTSTRAP_ADDR,
+      KAFKA_BOOTSTRAP_PORT,
+      offset,
+      KAFKA_GROUP,
+      singleTopic)
 
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
@@ -143,7 +155,7 @@ object StreamMono {
           }
           else{
             println("\n[ INFO ] ====== Save To Hive Data Lake ======\n")
-            storage.writeDFtoHive(dfs.toHive, "append", HIVE_DATABASE, tableName)
+            storage.writeDFtoHive(dfs.toHive, mode, HIVE_DATABASE, tableName)
             println("\n[ INFO ] ====== Save To Kudu Data Mart ======\n")
             storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
