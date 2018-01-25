@@ -1,8 +1,6 @@
 package it.reply.data.pasquali
 
 import com.typesafe.config.ConfigFactory
-import io.prometheus.client.{CollectorRegistry, Gauge}
-import io.prometheus.client.exporter.PushGateway
 import it.reply.data.pasquali.engine.ETL
 import it.reply.data.pasquali.model.TransformedDFs
 import kafka.serializer.StringDecoder
@@ -113,17 +111,6 @@ object StreamMono {
     println(s"MASTER = $SPARK_MASTER")
 
 
-    //*************************************************************************
-    // Metrics
-
-    val ENV = configuration.getString("rtetl.metrics.environment")
-    val JOB_NAME = configuration.getString("rtetl.metrics.job_name")
-
-    val GATEWAY_ADDR = configuration.getString("rtetl.metrics.gateway.address")
-    val GATEWAY_PORT = configuration.getString("rtetl.metrics.gateway.port")
-
-    //*************************************************************************
-
     storage = Storage()
       .init(SPARK_MASTER, SPARK_MASTER, true)
       .initKudu(KUDU_ADDR, KUDU_PORT, KUDU_TABLE_BASE)
@@ -132,25 +119,6 @@ object StreamMono {
 
     val spark = storage.spark
     val tableName = args(0).split("-")(2)
-
-    //*******************************************************************************
-
-
-    val LABEL_NUMBER_OF_NEW = s"${ENV}_${configuration.getString("rtetl.metrics.labels.number_of_new")}_$tableName"
-    val LABEL_HIVE_NUMBER = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.hive_number")}"
-    val LABEL_KUDU_NUMBER = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.kudu_number")}"
-    val LABEL_PROCESS_DURATION = s"${ENV}_${tableName}_${configuration.getString("rtetl.metrics.labels.process_duration")}"
-
-
-    val mc = MetricsCollector()
-      .initRegistry()
-      .initGateway(GATEWAY_ADDR, GATEWAY_PORT)
-      .initGaugeNewNumber(LABEL_NUMBER_OF_NEW, s"Number of new $tableName extract from topic")
-      .initGaugeHiveNumber(LABEL_HIVE_NUMBER, s"Number of $tableName in hive datalake")
-      .initGaugeKuduNumber(LABEL_KUDU_NUMBER, s"Number of $tableName in kudu datamart")
-      .initGaugeDuration(LABEL_PROCESS_DURATION, s"Duration of the single elaboration")
-
-    //*******************************************************************************
 
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topics)
@@ -162,8 +130,6 @@ object StreamMono {
           println("[ INFO ] Empty RDD")
         }
         else{
-
-          mc.startTimer()
 
           val stringRDD = rdd.map(entry => entry._2)
           val dfs : TransformedDFs = ETL.transformRDD(stringRDD, spark, tableName)
@@ -182,13 +148,6 @@ object StreamMono {
             storage.upsertKuduRows(dfs.toKudu, s"${KUDU_DATABASE}.${tableName}")
           }
 
-          mc.stopTimer()
-
-          mc.setNewElementsNumber(rdd.count())
-          mc.setHiveNumber(storage.readHiveTable(s"${HIVE_DATABASE}.${tableName}").count())
-          mc.setKuduNumber(storage.readKuduTable(s"${KUDU_DATABASE}.${tableName}").count())
-
-          mc.push(JOB_NAME)
         }
       }
     )
@@ -197,53 +156,7 @@ object StreamMono {
     ssc.awaitTermination()
   }
 
-  case class MetricsCollector(){
 
-    var gaugeNewElementsNumber : Gauge = null
-    var gaugeHiveNumber : Gauge = null
-    var gaugeKuduNumber : Gauge = null
-    var gaugeDuration : Gauge = null
-
-    var pushGateway : PushGateway = null
-
-    var timer : Gauge.Timer = null
-    var registry : CollectorRegistry = null
-
-    def initRegistry() : MetricsCollector = {registry = new CollectorRegistry(); this}
-
-    def initGateway(addr : String, port : String) : MetricsCollector = {
-      pushGateway = new PushGateway(s"$addr:$port")
-      this
-    }
-
-    def initGaugeHiveNumber(name: String, help: String): MetricsCollector = {
-      gaugeHiveNumber = Gauge.build().name(name).help(help).register(registry)
-      this
-    }
-
-    def initGaugeKuduNumber(name: String, help: String): MetricsCollector = {
-      gaugeKuduNumber = Gauge.build().name(name).help(help).register(registry)
-      this
-    }
-
-    def initGaugeNewNumber(name: String, help: String): MetricsCollector = {
-      gaugeNewElementsNumber = Gauge.build().name(name).help(help).register(registry)
-      this
-    }
-
-    def initGaugeDuration(name: String, help: String): MetricsCollector = {
-      gaugeDuration = Gauge.build().name(name).help(help).register(registry)
-      this
-    }
-
-    def setHiveNumber(value : Double) : Unit = gaugeHiveNumber.set(value)
-    def setKuduNumber(value : Double) : Unit = gaugeKuduNumber.set(value)
-    def setNewElementsNumber(value : Double) : Unit = gaugeNewElementsNumber.set(value)
-    def startTimer() : Unit = {timer = gaugeDuration.startTimer()}
-    def stopTimer() : Unit = {timer.setDuration()}
-
-    def push(jobName : String) = { pushGateway.push(registry, jobName)}
-  }
 
 
   def initStreaming(appName : String,

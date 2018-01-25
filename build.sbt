@@ -26,10 +26,14 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
 
-  "io.prometheus" % "simpleclient" % "0.1.0",
-  "io.prometheus" % "simpleclient_common" % "0.1.0",
-  "io.prometheus" % "simpleclient_hotspot" % "0.1.0",
-  "io.prometheus" % "simpleclient_pushgateway" % "0.1.0",
+//  Doesn't work due serialization of spark
+//  "io.prometheus" % "simpleclient" % "0.1.0",
+//  "io.prometheus" % "simpleclient_common" % "0.1.0",
+//  "io.prometheus" % "simpleclient_hotspot" % "0.1.0",
+//  "io.prometheus" % "simpleclient_pushgateway" % "0.1.0",
+
+//  But i always make my posts
+//  "org.scalaj" % "scalaj-http_2.11" % "2.3.0"
 )
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.2" % "test"
