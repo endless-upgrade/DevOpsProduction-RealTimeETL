@@ -104,7 +104,12 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     val tagsEntry = ETL.transformRDD(sampleRDD, spark, "tags")
 
     timer.setDuration()
-    pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+
+    try{
+      pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+    }catch{
+      case _ : Exception => println("Unable to reach Metric PushGateway")
+    }
 
     //{"id":5120,"userid":1741,"movieid":246,"tag":"setting:Chicago","timestamp":"1186434000"}
 
@@ -132,7 +137,11 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
     val ratingsEntry = ETL.transformRDD(sampleRDD, spark, "ratings")
 
     timer.setDuration()
-    pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+    try{
+      pushGateway.pushAdd(registry, s"${JOB_NAME}_${ENV}")
+    }catch{
+      case _ : Exception => println("Unable to reach Metric PushGateway")
+    }
 
     //{"id":39478,"userid":153,"movieid":508,"rating":4.5,"timestamp":"1101142930"}
 

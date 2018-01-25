@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "io.prometheus" % "simpleclient_pushgateway" % "0.1.0",
 
 //  But i always make my posts
-//  "org.scalaj" % "scalaj-http_2.11" % "2.3.0"
+  "org.scalaj" % "scalaj-http_2.11" % "2.3.0"
 )
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.2" % "test"
