@@ -20,7 +20,7 @@ pipeline {
     stage('Unit Tests') {
       steps {
         sh 'sbt clean test'
-        archiveArtifacts artifacts: 'target/scala-*/*.jar'
+        archiveArtifacts(artifacts: 'target/test-reports/*.xml', fingerprint: true)
       }
     }
     stage('Build') {
@@ -31,8 +31,8 @@ pipeline {
     }
     stage('Staging Deploy') {
       steps {
-        sh 'sudo cp target/*/*.jar /opt/deploy/realTimeETL/'
-        sh 'sudo cp -Rf conf/* /opt/deploy/realTimeETL/'
+        sh 'sudo cp target/*/*.jar /opt/deploy/realtime_etl/'
+        sh 'sudo cp -Rf conf/* /opt/deploy/realtime_etl/'
         sh 'sudo cp target/*/*.jar /opt/staging/IntegrationStagingProject/lib'
       }
     }
@@ -44,13 +44,13 @@ pipeline {
     stage('Deploy ?') {
       steps {
         script {
-          header = "Job <${env.JOB_URL}|${env.BRANCH_NAME}> <${env.JOB_DISPLAY_URL}|(Blue)>"
+          header = "Job <${env.JOB_URL}|${env.JOB_NAME}> <${env.JOB_URL}|${env.BRANCH_NAME}> <${env.JOB_DISPLAY_URL}|(Blue)>"
           header += " build <${env.BUILD_URL}|${env.BUILD_DISPLAY_NAME}> <${env.RUN_DISPLAY_URL}|(Blue)>:"
           message = "${header}\n"
           author = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
           commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
           message += " Commit by <@${author}> (${author}): ``` ${commitMessage} ``` "
-          message += "---"
+          message += "--------------------------------------------------------------------"
           message += "\nThe new **Real Time ETL** commit pass Unit and Integration tests"
           message += "\nThis session will be available for 60 second, make a CHOICE!"
           message += "\nPlease <${env.RUN_DISPLAY_URL}|Manual Deploy> it if you want!"
