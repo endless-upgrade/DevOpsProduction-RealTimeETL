@@ -41,11 +41,6 @@ pipeline {
         sh 'cd /opt/staging/IntegrationStagingProject/ && sbt clean test'
       }
     }
-    stage('Production Deploy') {
-      steps {
-        echo 'Safe to Deploy in Production, Great Job :D'
-      }
-    }
     stage('Deploy ?') {
       steps {
         script {
