@@ -20,7 +20,7 @@ pipeline {
     stage('Unit Tests') {
       steps {
         sh 'sbt clean test'
-        archiveArtifacts(artifacts: 'target/scala-*/*.jar', fingerprint: true)
+        archiveArtifacts artifacts: 'target/scala-*/*.jar'
       }
     }
     stage('Build') {
