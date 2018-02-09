@@ -164,6 +164,38 @@ class ETLSpec extends FlatSpec with BeforeAndAfterAll{
   }
 
 
+  "The ETL process" must "also works with test tables (aka generic names)" in {
+
+
+    var ratingsTestSample = """
+      {"schema":{"type":"struct","fields":[{"type":"int32","optional":false,"field":"id"},{"type":"int32","optional":true,"field":"userid"},{"type":"int32","optional":true,"field":"movieid"},{"type":"double","optional":true,"field":"rating"},{"type":"string","optional":true,"field":"timestamp"}],"optional":false,"name":"ratings_tests"},"payload":{"id":39478,"userid":153,"movieid":508,"rating":4.5,"timestamp":"1101142930"}}
+    """.stripMargin
+
+
+    val sampleRDD = sc.parallelize(Seq(ratingsTestSample))
+    val ratingsEntry = ETL.transformRDD(sampleRDD, spark, "ratings_tests")
+
+    //{"id":39478,"userid":153,"movieid":508,"rating":4.5,"timestamp":"1101142930"}
+
+    ratingsEntry.toHive.show()
+
+    val hive = ratingsEntry.toHive.collect()(0)
+    assert(hive(0) == 39478)
+    assert(hive(1) == 153)
+    assert(hive(2) == 508)
+    assert(hive(3) == 4.5)
+    assert(hive(4) == "1101142930")
+
+    val kudu = ratingsEntry.toKudu.collect()(0)
+    assert(hive(0) == 39478)
+    assert(hive(1) == 153)
+    assert(hive(2) == 508)
+    assert(hive(3) == 4.5)
+    assert(hive(4) == "1101142930")
+
+  }
+
+
 
 
 }

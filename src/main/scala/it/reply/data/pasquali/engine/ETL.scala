@@ -69,12 +69,22 @@ object ETL {
 
     val jsonDF = spark.sqlContext.jsonRDD(jsonStringRDD)
 
-    tableName match {
-      case "tags" => ETL.transformTags(jsonDF)
-      case "ratings" => ETL.transformRatings(jsonDF)
-      case "genomescore" => ETL.transformGenomeScores(jsonDF)
-    }
+    if(tableName.contains("tags"))
+      return ETL.transformTags(jsonDF)
 
+    if(tableName.contains("ratings"))
+      return ETL.transformRatings(jsonDF)
+
+    if(tableName.contains("genomescore"))
+      return ETL.transformGenomeScores(jsonDF)
+
+//    tableName match {
+//      case """\w*tags\w*""" => ETL.transformTags(jsonDF)
+//      case """\w*ratings\w*""" => ETL.transformRatings(jsonDF)
+//      case """\w*genomescore\w*""" => ETL.transformGenomeScores(jsonDF)
+//    }
+
+    TransformedDFs(null, null)
   }
 
 }
